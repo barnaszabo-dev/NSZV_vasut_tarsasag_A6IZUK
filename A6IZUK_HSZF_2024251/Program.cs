@@ -3,20 +3,19 @@ using A6IZUK_HSZF_2024251.Model;
 using A6IZUK_HSZF_2024251.Persistence.MsSql;
 using Microsoft.Extensions.DependencyInjection;
 
-
-
 class Program
 {
      static void Main(string[] args)
     {
-        // Az XML, vagy JSON fájl betöltése
+        // Az alkalmazás indítása és a vasúti adatok betöltése XML vagy JSON formátumból.
         string filePath;        
         List<RailwayLine> railwayLines;
 
         Console.WriteLine("Welcome to the NVSZ programme!\nWhich format do you want to import the data from?\n1. JSON\n2. XML");
         int dataFormatChoosen = int.Parse(Console.ReadLine());
 
-        switch(dataFormatChoosen)
+        // Adatformátum választása és fájl betöltése.
+        switch (dataFormatChoosen)
         {
             case 1:
                 filePath = "RailwayLines.json";
@@ -30,13 +29,14 @@ class Program
                 break;
         }
 
+        // Dependency Injection konfigurálása.
         var services = new ServiceCollection();
         ConfigureServices(services);
         var serviceProvider = services.BuildServiceProvider();
 
         var railwayService = serviceProvider.GetService<IRailwayService>();
 
-        // Adatok hozzáadása az alkalmazás indulásakor
+        // Az adatok hozzáadása a RailwayService-be
         foreach (var line in railwayLines)
         {
             railwayService.AddRailwayLines(line);
@@ -45,6 +45,7 @@ class Program
         bool running = true;
         while (running)
         {
+            // Fő menü opciók megjelenítése.
             Console.WriteLine("1. Add Railway Line");
             Console.WriteLine("2. Add Service");
             Console.WriteLine("3. Modify");
@@ -57,7 +58,7 @@ class Program
             var choice = Console.ReadLine();
             switch (choice)
             {
-
+                // Új vasútvonal hozzáadása.
                 case "1":
                     Console.Write("Enter Line Number: ");
                     var lineNumber = Console.ReadLine();
@@ -69,9 +70,9 @@ class Program
                     Console.WriteLine("Railway Line Added!");
                     break;
 
-
+                // Új szolgáltatás hozzáadása egy vasútvonalhoz.
                 case "2":
-                    Console.WriteLine("Which railway line (number?");
+                    Console.WriteLine("Which railway line (number)?");
                     string givenLine = Console.ReadLine();
                     Console.WriteLine("[TRAIN NUMBER] [FROM] [TO] [DELAYAMOUNT] [TRAINTYPE]");
                     string[] newServiceSplitted = Console.ReadLine().Split(' ');
@@ -79,6 +80,7 @@ class Program
                     railwayService.AddServiceToRailWayLine(givenLine, newService);
                     break;
 
+                // Vasútvonal vagy szolgáltatás módosítása.
                 case "3":
 
                     Console.WriteLine("Which railway? (number)");
@@ -124,7 +126,7 @@ class Program
                     railwayService.UpdateRailwayLine(railwayLine);
                     break;
 
-
+                // Az összes vasútvonal és szolgáltatás listázása.
                 case "4":
                     var lines =  railwayService.GetAllRailwayLines();
                     foreach (var line in lines)
@@ -136,6 +138,8 @@ class Program
                         }
                     }
                     break;
+
+                // Keresés tulajdonságok alapján.
                 case "5":
                     List<CommandSearch> commandSearches = new List<CommandSearch>();
 
@@ -174,15 +178,18 @@ class Program
                         }
                     }
                     break;
+                // Statisztikák generálása.
                 case "6":
                     Console.Write("Enter output path for statistics file: ");
                     var outputPath = Console.ReadLine();
                     railwayService.CreateStatistics(outputPath);
                     break;
 
+                // Kilépés.
                 case "7":
                     running = false;
                     break;
+                // Érvénytelen opció kezelése.
                 default:
                     Console.WriteLine("Invalid choice. Please try again.");
                     break;
@@ -191,10 +198,12 @@ class Program
         Console.ReadLine();
     }
 
+    // Dependency Injection konfigurálása.
     private static void ConfigureServices(ServiceCollection services)
     {
         services.AddScoped<IRailwayService, RailwayService>();
     }
+
 
 }
 

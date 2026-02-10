@@ -8,14 +8,15 @@ namespace A6IZUK_HSZF_2024251.Test
     [TestFixture]
     public class RailwayDataTests
     {
-
+        //Ellenőrzi, hogy létezik, és jó-e a fájl
         [Test]
         public void RailwayDataTestLoadingXML1()
         {
             string filePath = "RailwayLines.xml";
             List<RailwayLine> railwayLines = XmlDataLoader.LoadRailwayLinesFromXml(filePath);
-            Assert.That(railwayLines.Count(), !Is.EqualTo(0)); 
+            Assert.That(railwayLines.Count(), !Is.EqualTo(0));
         }
+        //Ellenőrzi, hogy a fájl struktúrája jó-e
         [Test]
         public void RailwayDataTestLoadingXML2()
         {
@@ -25,12 +26,15 @@ namespace A6IZUK_HSZF_2024251.Test
             Assert.That(railwayLines[0].LineNumber, Is.EqualTo(expectedLineNumber));
         }
         [Test]
+        //Ellenőrzi, hogy létezik, és jó-e a fájl
         public void RailwayDataTestLoadingJSON1()
         {
             string filePath = "RailwayLines.json";
             List<RailwayLine> railwayLines = JsonDataLoader.LoadRailwayLinesFromJson(filePath);
             Assert.That(railwayLines.Count(), !Is.EqualTo(0));
         }
+        //Ellenőrzi, hogy a fájl struktúrája jó-e
+
         [Test]
         public void RailwayDataTestLoadingJSON2()
         {
@@ -45,28 +49,37 @@ namespace A6IZUK_HSZF_2024251.Test
     public class RailwayLogicTests
     {
 
-        RailwayLine line = new RailwayLine {LineNumber = "1",LineName ="A"};
 
-        Service service = new Service { TrainNumber = 1, From = "Hagymaföld", To = "Krumpliföld", DelayAmount = 4, TrainType = "Intercity" };
 
+        //Ellenőrzi, hogy jó-e a RailWayService (vasútvonal) hozzáadási funkciója
         [Test]
         public void RailWayServiceRailwayLineAddTest()
         {
+            RailwayLine line = new RailwayLine { LineNumber = "1", LineName = "A" };
+
+            Service service = new Service { TrainNumber = 1, From = "Hagymaföld", To = "Krumpliföld", DelayAmount = 4, TrainType = "Intercity" };
             IRailwayService railWayService = new RailwayService();
             railWayService.AddRailwayLines(line);
             Assert.That(railWayService.GetAllRailwayLines(), !Is.EqualTo(0));
         }
+        //Ellenőrzi, hogy jó-e a RailWayService (járat) hozzáadási funkciója
         [Test]
         public void RailWayServiceAddTest()
         {
+            RailwayLine line = new RailwayLine { LineNumber = "1", LineName = "A" };
+
+            Service service = new Service { TrainNumber = 1, From = "Hagymaföld", To = "Krumpliföld", DelayAmount = 4, TrainType = "Intercity" };
             IRailwayService railWayService = new RailwayService();
             railWayService.AddRailwayLines(line);
             railWayService.AddServiceToRailWayLine(line.LineNumber, service);
             Assert.That(railWayService.GetAllRailwayLines()[0].Services.Count(), !Is.EqualTo(0));
         }
+        //Ellenőrzi, hogy az adott vonal adott jellemzoje modosult-e
         [Test]
         public void RailWayServiceRailwayModifyTest()
         {
+            RailwayLine line = new RailwayLine { LineNumber = "1", LineName = "A" };
+            Service service = new Service { TrainNumber = 1, From = "Hagymaföld", To = "Krumpliföld", DelayAmount = 4, TrainType = "Intercity" };
             IRailwayService railWayService = new RailwayService();
             string modifyLinenumber = "2";
             string modifyLinename = "B";
@@ -74,10 +87,18 @@ namespace A6IZUK_HSZF_2024251.Test
             line = railWayService.ModifyRailway(line, "LINENAME", modifyLinename);
             Assert.That(line.LineNumber, Is.EqualTo(modifyLinenumber));
             Assert.That(line.LineName, Is.EqualTo(modifyLinename));
+            railWayService.AddRailwayLines(line);
+            railWayService.UpdateRailwayLine(line);
+            Assert.That(railWayService.GetAllRailwayLines()[0].LineName, Is.EqualTo(modifyLinename));
+            Assert.That(railWayService.GetAllRailwayLines()[0].LineNumber, Is.EqualTo(modifyLinenumber));
         }
+        //Ellenőrzi, hogy az adott járat adott jellmezője modosult-e
         [Test]
         public void RailWayServiceServiceModifyTest()
         {
+            RailwayLine line = new RailwayLine { LineNumber = "1", LineName = "A" };
+
+            Service service = new Service { TrainNumber = 1, From = "Hagymaföld", To = "Krumpliföld", DelayAmount = 4, TrainType = "Intercity" };
             IRailwayService railWayService = new RailwayService();
 
             railWayService.AddRailwayLines(line);
@@ -99,10 +120,15 @@ namespace A6IZUK_HSZF_2024251.Test
             Assert.That(service.From, Is.EqualTo(modifyFrom));
             Assert.That(service.DelayAmount, Is.EqualTo(int.Parse(delayAmount)));
             Assert.That(service.TrainType, Is.EqualTo(trainType));
+
         }
+        //Ellenőrzi, hogy az adott járatot kitörli-e
         [Test]
         public void RailWayServiceDelete()
         {
+            RailwayLine line = new RailwayLine { LineNumber = "1", LineName = "A" };
+
+            Service service = new Service { TrainNumber = 1, From = "Hagymaföld", To = "Krumpliföld", DelayAmount = 4, TrainType = "Intercity" };
             IRailwayService railWayService = new RailwayService();
 
             railWayService.AddRailwayLines(line);
@@ -113,10 +139,13 @@ namespace A6IZUK_HSZF_2024251.Test
 
 
         }
-
+        //Ellenőrzi, hogy egyáltalán kiirja a fájlt.
         [Test]
         public void RailWayServiceCreateStatistics()
         {
+            RailwayLine line = new RailwayLine { LineNumber = "1", LineName = "A" };
+
+            Service service = new Service { TrainNumber = 1, From = "Hagymaföld", To = "Krumpliföld", DelayAmount = 4, TrainType = "Intercity" };
             IRailwayService railWayService = new RailwayService();
             railWayService.AddRailwayLines(line);
             railWayService.AddServiceToRailWayLine(line.LineNumber, service);
@@ -124,6 +153,60 @@ namespace A6IZUK_HSZF_2024251.Test
             railWayService.CreateStatistics("");
 
             Assert.That(File.Exists("statistics.txt"), Is.EqualTo(true));
+        }
+
+
+        [Test]
+        public void SearchinRailwayTest()
+        {
+            RailwayLine line = new RailwayLine { LineNumber = "1", LineName = "A" };
+
+            Service service = new Service { TrainNumber = 1, From = "Hagymaföld", To = "Krumpliföld", DelayAmount = 4, TrainType = "Intercity" };
+            IRailwayService railWayService = new RailwayService();
+            railWayService.AddRailwayLines(line);
+            railWayService.AddServiceToRailWayLine(line.LineNumber, service);
+
+            RailwayLine line1 = new RailwayLine { LineNumber = "2", LineName = "B" };
+            RailwayLine line2 = new RailwayLine { LineNumber = "3", LineName = "C" };
+
+            Service service1_1 = new Service { TrainNumber = 3, From = "Asd", To = "Dsa", DelayAmount = 4, TrainType = "Intercity" };
+            Service service1_2 = new Service { TrainNumber = 4, From = "Asd", To = "Pokol", DelayAmount = 4, TrainType = "Intercity" };
+            Service service1_3 = new Service { TrainNumber = 5, From = "Asd", To = "Mennyország", DelayAmount = 4, TrainType = "Zónázó" };
+            Service service1_4 = new Service { TrainNumber = 6, From = "Kaposvár", To = "Szeged", DelayAmount = 10, TrainType = "Személyi" };
+            line1.Services.Add(service1_1);
+            line1.Services.Add(service1_2);
+            line1.Services.Add(service1_3);
+            line1.Services.Add(service1_4);
+            railWayService.AddRailwayLines(line1);
+            railWayService.AddRailwayLines(line2);
+
+            //Megnézzük, hogy létezik-e az a járat, aminek a száma 3, és keressük összes olyan járatot, amiben a cél Asd (függetlenül, hogy milyen vonal)
+            CommandSearch search1 = new CommandSearch { Type = "RAILWAY", Property = "LINENUMBER", Value = "3" };
+            CommandSearch search2 = new CommandSearch { Type = "SERVICE", Property = "FROM", Value = "Asd" };
+
+            List<CommandSearch> commandSearches = new List<CommandSearch> { search1, search2 };
+
+            List<RailwayLine> selectedRailways = railWayService.SearchinRailway(commandSearches);
+
+            var selected1Railway = selectedRailways?.First(x => x.LineNumber == "2");
+            Assert.That(selected1Railway, !Is.EqualTo(null));
+            Assert.That(selected1Railway.Services.Count, Is.EqualTo(3));
+
+            //Megnézzük, hogy vannak-e 5-nél kevesebbiek
+            CommandSearch search3 = new CommandSearch { Type = "SERVICE", Property = "DELAYAMOUNT", Value = "5" };
+
+            commandSearches = new List<CommandSearch> { search3 };
+
+            selectedRailways = railWayService.SearchinRailway(commandSearches);
+            //Ellenőrzi, hogy nem üres-e
+            Assert.That(selectedRailways, !Is.EqualTo(null));
+            int count = 0;
+            foreach (RailwayLine actualLine in selectedRailways)
+                count += actualLine.Services.Count;
+            //Azért 4, mert 5-nél kevesebbi késési járatok száma 4.
+            Assert.That(count, Is.EqualTo(4));
+
+
         }
     }
 

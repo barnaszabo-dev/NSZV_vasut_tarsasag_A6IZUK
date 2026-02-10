@@ -5,20 +5,22 @@ namespace A6IZUK_HSZF_2024251.Application
 {
     public class RailwayService : IRailwayService
     {
-
+        // A vasútvonalak tárolására szolgáló lista.
         private readonly List<RailwayLine> _railwayLines = new List<RailwayLine>();
 
-
+        // Új vasútvonal hozzáadása vagy a meglévő vonal frissítése új szolgáltatásokkal.
         public void AddRailwayLines(RailwayLine line)
         {
             var existingLine = _railwayLines.FirstOrDefault(r => r.LineNumber == line.LineNumber);
 
             if (existingLine == null)
             {
+                // Új vonal hozzáadása, ha még nem létezik.
                 _railwayLines.Add(line);
             }
             else
             {
+                // Új szolgáltatások hozzáadása a meglévő vonalhoz.
                 foreach (var service in line.Services)
                 {
                     if (!existingLine.Services.Any(s => s.TrainNumber == service.TrainNumber))
@@ -34,6 +36,7 @@ namespace A6IZUK_HSZF_2024251.Application
              
         }
 
+        // Új járat hozzáadása egy meglévő vasútvonalhoz.
         public void AddServiceToRailWayLine(string lineNumber, Service service)
         {
             var existingLine = _railwayLines.FirstOrDefault(r => r.LineNumber == lineNumber);
@@ -44,6 +47,7 @@ namespace A6IZUK_HSZF_2024251.Application
             }
             else
             {
+                // Ellenőrzés, hogy a járatszám nem létezik-e már.
                 if (!existingLine.Services.Any(s => s.TrainNumber == service.TrainNumber))
                 {
                     existingLine.Services.Add(service);
@@ -56,11 +60,13 @@ namespace A6IZUK_HSZF_2024251.Application
             }
         }
 
+        // Az összes vasútvonal listázása.
         public List<RailwayLine>  GetAllRailwayLines()
         {
             return _railwayLines;
         }
-        
+
+        // Vasútvonalak keresése megadott keresési feltételek alapján.
         public List<RailwayLine> SearchinRailway(List<CommandSearch> commands)
         {
             List<RailwayLine> railwayLines = new List<RailwayLine>();
@@ -123,7 +129,7 @@ namespace A6IZUK_HSZF_2024251.Application
         }
 
 
-
+        // Egy meglévő vasútvonal adatainak frissítése.
         public void UpdateRailwayLine(RailwayLine line)
         {
             var existingLine = _railwayLines.FirstOrDefault(r => r.LineNumber == line.LineNumber);
@@ -135,6 +141,8 @@ namespace A6IZUK_HSZF_2024251.Application
             }
             
         }
+
+        // Vasútvonal egy tulajdonságának módosítása.
         public RailwayLine ModifyRailway(RailwayLine railwayLine, string property, string value)
         {
             if (property.Equals("LINENAME", StringComparison.OrdinalIgnoreCase))
@@ -154,6 +162,7 @@ namespace A6IZUK_HSZF_2024251.Application
             return railwayLine;
         }
 
+        // Egy járat tulajdonságának módosítása.
         public Service ModifyService(Service service, int index, string property, string value)
         {
 
@@ -187,7 +196,7 @@ namespace A6IZUK_HSZF_2024251.Application
 
         }
 
-
+        // Egy adott vasútvonal törlése.
         public void DeleteRailwayLine(string lineNumber)
         {
             var line = _railwayLines.FirstOrDefault(r => r.LineNumber == lineNumber);
@@ -198,6 +207,7 @@ namespace A6IZUK_HSZF_2024251.Application
             
         }
 
+        // Statisztikák generálása és fájlba mentése.
         public void CreateStatistics(string outputPath)
         {
             var statistics = new List<string>();
@@ -228,8 +238,12 @@ namespace A6IZUK_HSZF_2024251.Application
 
             try
             {
-                outputPath += "statistics.txt";
-                System.IO.File.WriteAllLines(outputPath, statistics);
+                string currentDirectory = Directory.GetCurrentDirectory();
+                string newDirectoryPath = Path.Combine(currentDirectory, outputPath);
+                if (!Directory.Exists(newDirectoryPath))
+                    Directory.CreateDirectory(newDirectoryPath);
+                newDirectoryPath += "/statistics.txt";
+                System.IO.File.WriteAllLines(newDirectoryPath, statistics);
                 Console.WriteLine("Statistics saved successfully to " + outputPath);
             }
             catch (Exception ex)
@@ -237,7 +251,7 @@ namespace A6IZUK_HSZF_2024251.Application
                 Console.WriteLine("An error occurred while saving statistics: " + ex.Message);
             }
 
-            
+
         }
     }
 }
