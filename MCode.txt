@@ -1,0 +1,504 @@
+using A6IZUK_HSZF_2024251.Model;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace A6IZUK_HSZF_2024251.Application
+{
+    public interface IRailwayService
+    {
+        Task AddRailwayLinesAsync(RailwayLine line);
+        Task<List<RailwayLine>> GetAllRailwayLinesAsync();
+        Task<RailwayLine> GetRailwayLineByIdAsync(int id);
+        Task UpdateRailwayLineAsync(RailwayLine line);
+        Task DeleteRailwayLineAsync(int id);
+        Task CreateStatisticsAsync(string outputPath);
+    }
+
+}
+using A6IZUK_HSZF_2024251.Model;
+using A6IZUK_HSZF_2024251.Persistence.MsSql;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace A6IZUK_HSZF_2024251.Application
+{
+    public class RailwayService : IRailwayService
+    {
+        private readonly List<RailwayLine> _railwayLines = new List<RailwayLine>();
+
+        public async Task AddRailwayLinesAsync(RailwayLine line)
+        {
+            var existingLine = _railwayLines.FirstOrDefault(r => r.LineNumber == line.LineNumber);
+
+            if (existingLine == null)
+            {
+                _railwayLines.Add(line);
+            }
+            else
+            {
+                foreach (var service in line.Services)
+                {
+                    if (!existingLine.Services.Any(s => s.TrainNumber == service.TrainNumber))
+                    {
+                        existingLine.Services.Add(service);
+                    }
+                }
+            }
+            await Task.CompletedTask; // Szimuláljuk az aszinkron működést
+        }
+
+        public async Task<List<RailwayLine>> GetAllRailwayLinesAsync()
+        {
+            return await Task.FromResult(_railwayLines);
+        }
+
+        public async Task<RailwayLine> GetRailwayLineByIdAsync(int id)
+        {
+            return await Task.FromResult(_railwayLines.FirstOrDefault(r => r.Id == id));
+        }
+
+        public async Task UpdateRailwayLineAsync(RailwayLine line)
+        {
+            var existingLine = _railwayLines.FirstOrDefault(r => r.Id == line.Id);
+            if (existingLine != null)
+            {
+                existingLine.LineNumber = line.LineNumber;
+                existingLine.LineName = line.LineName;
+                existingLine.Services = line.Services;
+            }
+            await Task.CompletedTask;
+        }
+
+        public async Task DeleteRailwayLineAsync(int id)
+        {
+            var line = _railwayLines.FirstOrDefault(r => r.Id == id);
+            if (line != null)
+            {
+                _railwayLines.Remove(line);
+            }
+            await Task.CompletedTask;
+        }
+
+        public async Task CreateStatisticsAsync(string outputPath)
+        {
+            var statistics = new List<string>();
+            foreach (var line in _railwayLines)
+            {
+                var onTimeCount = line.Services.Count(service => service.DelayAmount < 5);
+                var averageDelay = line.Services.Average(service => service.DelayAmount);
+                var mostDelayedService = line.Services.OrderByDescending(service => service.DelayAmount).FirstOrDefault();
+                var mostFrequentDestination = line.Services
+                    .Where(service => service.DelayAmount > 5)
+                    .GroupBy(service => service.To)
+                    .OrderByDescending(group => group.Count())
+                    .FirstOrDefault()?.Key;
+
+                statistics.Add($"Line {line.LineNumber} ({line.LineName}):");
+                statistics.Add($" - On-time (<5 min delay) services: {onTimeCount}");
+                statistics.Add($" - Average delay: {averageDelay:F2} minutes");
+                if (mostDelayedService != null)
+                {
+                    statistics.Add($" - Most delayed service: Train {mostDelayedService.TrainNumber} with {mostDelayedService.DelayAmount} minutes delay");
+                }
+                if (mostFrequentDestination != null)
+                {
+                    statistics.Add($" - Most frequent delayed destination: {mostFrequentDestination}");
+                }
+                statistics.Add("");
+            }
+
+            try
+            {
+                System.IO.File.WriteAllLines(outputPath, statistics);
+                Console.WriteLine("Statistics saved successfully to " + outputPath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred while saving statistics: " + ex.Message);
+            }
+
+            await Task.CompletedTask;
+        }
+    }
+}
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace A6IZUK_HSZF_2024251.Model
+{
+    public class RailwayLine
+    {
+        public int Id { get; set; }
+        public string LineNumber { get; set; }
+        public string LineName { get; set; }
+        public List<Service> Services { get; set; } = new List<Service>();
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace A6IZUK_HSZF_2024251.Model
+{
+    public class Service
+    {
+        public int Id { get; set; }
+        public string From { get; set; }
+        public string To { get; set; }
+        public int TrainNumber { get; set; }
+        public int DelayAmount { get; set; }
+        public string TrainType { get; set; }
+    }
+}
+using A6IZUK_HSZF_2024251.Model;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace A6IZUK_HSZF_2024251.Persistence.MsSql
+{
+    public static class JsonDataLoader
+    {
+        public static List<RailwayLine> LoadRailwayLinesFromJson(string filePath)
+        {
+            var railwayLines = new List<RailwayLine>();
+            try
+            {
+                var json = File.ReadAllText(filePath);
+                railwayLines = System.Text.Json.JsonSerializer.Deserialize<List<RailwayLine>>(json);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred while loading JSON data: " + ex.Message);
+            }
+
+            return railwayLines;
+        }
+    }
+}
+using A6IZUK_HSZF_2024251.Model;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection.Emit;
+using System.Text;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+
+namespace A6IZUK_HSZF_2024251.Persistence.MsSql
+{
+    public class RailwayDbContext : DbContext
+    {
+        public RailwayDbContext(DbContextOptions<RailwayDbContext> options) : base(options) { }
+
+        public DbSet<RailwayLine> RailwayLines { get; set; }
+        public DbSet<Service> Services { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<RailwayLine>()
+                .HasMany(r => r.Services)
+                .WithOne()
+                .HasForeignKey(s => s.Id);
+
+            base.OnModelCreating(modelBuilder);
+        }
+    }
+}
+using A6IZUK_HSZF_2024251.Model;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Xml.Linq;
+
+namespace A6IZUK_HSZF_2024251.Persistence.MsSql
+{
+    public static class XmlDataLoader
+    {
+        public static List<RailwayLine> LoadRailwayLinesFromXml(string filePath)
+        {
+
+            var railwayLines = new List<RailwayLine>();
+            try
+            {
+                XDocument doc = XDocument.Load(filePath);
+
+                foreach (var lineElement in doc.Descendants("RailwayLine"))
+                {
+                    var railwayLine = new RailwayLine
+                    {
+                        LineNumber = lineElement.Element("LineNumber")?.Value,
+                        LineName = lineElement.Element("LineName")?.Value,
+                        Services = new List<Service>()
+                    };
+
+                    foreach (var serviceElement in lineElement.Descendants("Service"))
+                    {
+                        var service = new Service
+                        {
+                            From = serviceElement.Element("From")?.Value,
+                            To = serviceElement.Element("To")?.Value,
+                            TrainNumber = int.Parse(serviceElement.Element("TrainNumber")?.Value ?? "0"),
+                            DelayAmount = int.Parse(serviceElement.Element("DelayAmount")?.Value ?? "0"),
+                            TrainType = serviceElement.Element("TrainType")?.Value
+                        };
+                        railwayLine.Services.Add(service);
+                    }
+
+                    railwayLines.Add(railwayLine);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred while loading XML data: " + ex.Message);
+            }
+
+            return railwayLines;
+        }
+    }
+}
+using A6IZUK_HSZF_2024251.Application;
+using A6IZUK_HSZF_2024251.Model;
+using A6IZUK_HSZF_2024251.Persistence.MsSql;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using Microsoft.Extensions.Logging;
+
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Az XML fájl betöltése
+        string filePath = "RailwayLines.xml";
+        List<RailwayLine> railwayLines = XmlDataLoader.LoadRailwayLinesFromXml(filePath);
+
+        var services = new ServiceCollection();
+        ConfigureServices(services);
+        var serviceProvider = services.BuildServiceProvider();
+
+        var railwayService = serviceProvider.GetService<IRailwayService>();
+
+        // Adatok hozzáadása az alkalmazás indulásakor
+        foreach (var line in railwayLines)
+        {
+            await railwayService.AddRailwayLinesAsync(line);
+        }
+
+        bool running = true;
+        while (running)
+        {
+            Console.WriteLine("1. Add Railway Line");
+            Console.WriteLine("2. List All Railway Lines");
+            Console.WriteLine("3. Exit");
+            Console.WriteLine("4. Generate Statistics");
+            Console.Write("Choose an option: ");
+
+            var choice = Console.ReadLine();
+            switch (choice)
+            {
+                case "1":
+                    Console.Write("Enter Line Number: ");
+                    var lineNumber = Console.ReadLine();
+                    Console.Write("Enter Line Name: ");
+                    var lineName = Console.ReadLine();
+
+                    var newLine = new RailwayLine { LineNumber = lineNumber, LineName = lineName };
+                    await railwayService.AddRailwayLinesAsync(newLine);
+                    Console.WriteLine("Railway Line Added!");
+                    break;
+
+                case "2":
+                    var lines = await railwayService.GetAllRailwayLinesAsync();
+                    foreach (var line in lines)
+                    {
+                        Console.WriteLine($"{line.LineNumber} - {line.LineName}");
+                        foreach (var service in line.Services)
+                        {
+                            Console.WriteLine($"   Train {service.TrainNumber} from {service.From} to {service.To}, Delay: {service.DelayAmount} minutes");
+                        }
+                    }
+                    break;
+
+                case "3":
+                    running = false;
+                    break;
+
+                case "4":
+                    Console.Write("Enter output path for statistics file: ");
+                    var outputPath = Console.ReadLine();
+                    await railwayService.CreateStatisticsAsync(outputPath);
+                    break;
+
+                default:
+                    Console.WriteLine("Invalid choice. Please try again.");
+                    break;
+            }
+        }
+        Console.ReadLine();
+    }
+
+    private static void ConfigureServices(ServiceCollection services)
+    {
+        services.AddScoped<IRailwayService, RailwayService>();
+    }
+}
+
+using A6IZUK_HSZF_2024251.Application;
+using A6IZUK_HSZF_2024251.Model;
+using A6IZUK_HSZF_2024251.Persistence.MsSql;
+using Microsoft.EntityFrameworkCore;
+using Xunit;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace A6IZUK_HSZF_2024251.Test
+{
+    public class RailwayServiceTests
+    {
+        private RailwayDbContext GetInMemoryDbContext()
+        {
+            var options = new DbContextOptionsBuilder<RailwayDbContext>()
+                .UseInMemoryDatabase(databaseName: "TestRailwayDb")
+                .Options;
+            return new RailwayDbContext(options);
+        }
+
+        [Fact]
+        public async Task AddRailwayLineAsync_ShouldNotifyWhenNewServiceHasLowerDelay()
+        {
+            // Arrange
+            var context = GetInMemoryDbContext();
+            var service = new RailwayService(context);
+
+            var railwayLine = new RailwayLine
+            {
+                LineNumber = "100A",
+                LineName = "BP-Nyugati -> Szolnok",
+                Services = new List<Service>
+        {
+            new Service { TrainNumber = 4320, From = "BP-Nyugati", To = "Cegléd", DelayAmount = 20, TrainType = "Passenger" }
+        }
+            };
+
+            await service.AddRailwayLinesAsync(railwayLine);
+
+            // Act - új vonat hozzáadása, amely kevesebbet késik
+            var newLine = new RailwayLine
+            {
+                LineNumber = "100A",
+                LineName = "BP-Nyugati -> Szolnok",
+                Services = new List<Service>
+        {
+            new Service { TrainNumber = 4330, From = "BP-Nyugati", To = "Cegléd", DelayAmount = 5, TrainType = "Passenger" }
+        }
+            };
+
+            using (var sw = new StringWriter())
+            {
+                Console.SetOut(sw);
+
+                await service.AddRailwayLinesAsync(newLine);
+
+                var output = sw.ToString();
+                Assert.Contains("kevesebbet késett", output);
+            }
+        }
+        [Fact]
+        public async Task GetAllRailwayLinesAsync_ShouldReturnAllLines()
+        {
+            // Arrange
+            var context = GetInMemoryDbContext();
+            var service = new RailwayService(context);
+            context.RailwayLines.Add(new RailwayLine { LineNumber = "100A", LineName = "BP-Nyugati -> Szolnok" });
+            context.RailwayLines.Add(new RailwayLine { LineNumber = "120A", LineName = "BP-Keleti -> Szolnok" });
+            await context.SaveChangesAsync();
+
+            // Act
+            var result = await service.GetAllRailwayLinesAsync();
+
+            // Assert
+            Assert.Equal(2, result.Count);
+        }
+
+        [Fact]
+        public async Task GetRailwayLineByIdAsync_ShouldReturnCorrectLine()
+        {
+            // Arrange
+            var context = GetInMemoryDbContext();
+            var service = new RailwayService(context);
+            var railwayLine = new RailwayLine { LineNumber = "100A", LineName = "BP-Nyugati -> Szolnok" };
+            context.RailwayLines.Add(railwayLine);
+            await context.SaveChangesAsync();
+
+            // Act
+            var result = await service.GetRailwayLineByIdAsync(railwayLine.Id);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("100A", result.LineNumber);
+        }
+
+        [Fact]
+        public async Task UpdateRailwayLineAsync_ShouldUpdateLineSuccessfully()
+        {
+            // Arrange
+            var context = GetInMemoryDbContext();
+            var service = new RailwayService(context);
+            var railwayLine = new RailwayLine { LineNumber = "100A", LineName = "BP-Nyugati -> Szolnok" };
+            context.RailwayLines.Add(railwayLine);
+            await context.SaveChangesAsync();
+
+            // Act
+            railwayLine.LineName = "BP-Nyugati -> Szolnok Updated";
+            await service.UpdateRailwayLineAsync(railwayLine);
+            var result = await context.RailwayLines.FirstOrDefaultAsync(r => r.Id == railwayLine.Id);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("BP-Nyugati -> Szolnok Updated", result.LineName);
+        }
+
+        [Fact]
+        public async Task DeleteRailwayLineAsync_ShouldDeleteLineSuccessfully()
+        {
+            // Arrange
+            var context = GetInMemoryDbContext();
+            var service = new RailwayService(context);
+            var railwayLine = new RailwayLine { LineNumber = "200A", LineName = "TestLine" };
+
+            context.RailwayLines.Add(railwayLine);
+            await context.SaveChangesAsync();
+
+            // Act
+            await service.DeleteRailwayLineAsync(railwayLine.Id);
+            var result = await context.RailwayLines.FirstOrDefaultAsync(r => r.Id == railwayLine.Id);
+
+            // Assert
+            Assert.Null(result);
+        }
+    }
+}
+
