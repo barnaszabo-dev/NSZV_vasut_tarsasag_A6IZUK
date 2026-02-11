@@ -1,90 +1,104 @@
-NSZV 
+# 🚆 NSZV Vasúti Statisztikai Rendszer
 
-Az NSZV vasúttársaság annak érdekében, hogy bebizonyítsa a vonataik igenis pontosak felbérelték Önt, a HSZF szoftverfejlesztő cég egyik alkalmazottját, hogy segítsen feldolgozni az adatokat. 
-Adott egy JSON formátum, amelyben az egyes vasútvonalak és a vonalhoz tartozó járatok találhatóak. A program képes legyen a felhasználótól egy ilyen formátumú fájlt betölteni és a benne lévő adatokat elmenteni egy adatbázisba. Az ehhez szükséges adatbázis sémát, valamint az egyes táblák létrehozása az Ön feladata. 
-További követelmény ha egy újabb fájl betöltésekor, ha már létezik az adott vonal, akkor csak az új járatokat adjuk hozzá! 
-Legyen mód vasútvonalat létrehozni, módosítani, törölni a program futása alatt 
-Arra is legyen mód, hogy kézzel is új járatokat tudjunk hozzáadni. Ha az adott járat kevesebbet késett, mint az adott vonalon bármelyik akkor erről a tényről esemény formájában értesítsük a felhasználót. 
+## 📌 Projekt leírás
 
-Generáljon statisztikát a következőkről és mentse el egy fájlba: 
-Vasútvonalanként az 5 percnél kisebb késéssel leközlekedett vonatok számát. 
-Vasútvonalanként az átlagos késések mértékét, a legkevesebb és legtöbbet késett járatok adataival 
-Vasútvonalanként a legtöbb késő járatban szereplő célállomást. (az 5 perc vagy alatti “késést” nem vesszük késésnek) 
-Opcionálisan legyen lehetőség egy elérési útvonalat megadni ahova a kimeneti fájl elmentésre kerül. 
-Legyen lehetőség listázni az egyes vasútvonalakat, de arra is legyen mód, hogy keressünk, illetve szűkítsük a lista eredményét.Ehhez a funkcionalitáshoz hozzon létre egy alap keresési funkciót, amely az egyes tulajdonságok alapján képes keresni. Előfordulhat az, hogy a felhasználó csak egy bizonyos tulajdonság alapján akar keresni, de lehet az összeset megadja, ezt kezelje a program! 
+Az NSZV vasúttársaság számára készült rendszer célja a vasútvonalak és járatok késési adatainak feldolgozása, adatbázisban történő tárolása és statisztikai elemzése.
 
-{ 
+A program JSON formátumú fájlból olvassa be a vasútvonalak és járatok adatait, majd azokat adatbázisban tárolja és elemzi.
 
-    "RailwayLines": [ 
+---
 
-        { 
+## 🛠 Alkalmazott technológiák
 
-            "LineNumber": "120A", 
+- C#
+- JSON deszerializáció
+- Adatbázis kezelés
+- Eseménykezelés
+- LINQ lekérdezések
+- Fájlkezelés
+- OOP tervezés
 
-            "LineName": "BP-Keleti->Szolnok", 
+---
 
-            "Services": [ 
+## 📂 Fő funkciók
 
-                { 
+### 🔹 JSON fájl betöltése
+- A felhasználó kiválaszthat egy JSON fájlt
+- A rendszer feldolgozza a vasútvonalakat és járatokat
+- Az adatokat adatbázisba menti
 
-                    "From": "Szolnok", 
+### 🔹 Duplikáció kezelés
+- Ha egy vasútvonal már létezik:
+  - Csak az új járatok kerülnek hozzáadásra
+  - A meglévők nem duplikálódnak
 
-                    "To": "Budapest-Keleti", 
+---
 
-                    "TrainNumber": 3320, 
+### 🔹 CRUD műveletek
 
-                    "DelayAmount": 3, 
+A program futása közben lehetőség van:
 
-                    "TrainType": "InterCity" 
+- Új vasútvonal létrehozására
+- Vasútvonal módosítására
+- Vasútvonal törlésére
+- Új járat kézi hozzáadására
 
-                }, 
+---
 
-                { 
+### 🔔 Eseménykezelés
 
-                    "From": "Budapest-Keleti", 
+Ha egy új járat késése kisebb, mint az adott vasútvonal eddigi legkisebb késése,  
+a rendszer esemény formájában értesíti a felhasználót.
 
-                    "To": "Sülysáp", 
+---
 
-                    "DelayAmount": 10, 
+## 📊 Generált statisztikák
 
-                    "TrainType": "Passenger", 
+A rendszer statisztikát készít és fájlba menti az alábbiakról:
 
-                    "TrainNumber": 3210 
+### Vasútvonalanként:
 
-                } 
+- 5 percnél kisebb késéssel közlekedett járatok száma
+- Átlagos késés mértéke
+- Legkevesebbet késett járat
+- Legtöbbet késett járat
+- A legtöbb késő járatban szereplő célállomás  
+  (5 perc vagy kevesebb nem számít késésnek)
 
-            ] 
+A felhasználó opcionálisan megadhatja a kimeneti fájl mentési útvonalát.
 
-        }, 
+---
 
-        { 
+## 🔍 Keresési és szűrési funkciók
 
-            "LineName": "BP-Nyugati->Szolnok", 
+- Vasútvonalak listázása
+- Alap keresési funkció tulajdonságok alapján
+- Több feltételes keresés támogatása
+- Részleges szűrés kezelése
+  (a felhasználó csak bizonyos mezőket is megadhat)
 
-            "LineNumber": "100A", 
+---
 
-            "Services": [ 
+## 🗄 Példa JSON struktúra
 
-                { 
+```json
+{
+  "RailwayLines": [
+    {
+      "LineNumber": "120A",
+      "LineName": "BP-Keleti->Szolnok",
+      "Services": [
+        {
+          "From": "Szolnok",
+          "To": "Budapest-Keleti",
+          "TrainNumber": 3320,
+          "DelayAmount": 3,
+          "TrainType": "InterCity"
+        }
+      ]
+    }
+  ]
+}
 
-                    "From": "BP-Nyugati", 
-
-                    "To": "Cegléd", 
-
-                    "TrainNumber": 4320, 
-
-                    "DelayAmount": 25, 
-
-                    "TrainType": "Passenger" 
-
-                } 
-
-            ] 
-
-        } 
-
-    ] 
-
-} 
 
  
